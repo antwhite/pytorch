@@ -753,11 +753,18 @@ def floor(x):
 
 
 @register_lowering(aten.round)
-def round(x):
-    if is_integer_type(x):
+def round(x, decimals=0):
+    if is_integer_type(x) and decimals >= 0:
         return clone(x)
-    fn = ops_wrapper("round")
-    return make_pointwise(fn)(x)
+    if decimals == 0:
+        fn = ops_wrapper("round")
+        return make_pointwise(fn)(x)
+    elif decimals > 0:
+        ten_pow = 10.0**decimals
+        return div(round(mul(x, ten_pow)), ten_pow)
+    else:
+        ten_pow = 10.0 ** (-decimals)
+        return mul(round(div(x, ten_pow)), ten_pow)
 
 
 @register_lowering(aten.trunc)
