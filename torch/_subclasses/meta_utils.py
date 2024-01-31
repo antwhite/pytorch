@@ -529,14 +529,16 @@ class MetaConverter:
                             outer_stride=strides,
                         )
                     else:
-                        r = callback(
-                            lambda: torch.empty_strided(
-                                sizes,
-                                strides,
-                                dtype=t.dtype,
-                                device="meta",
+                        with torch._functorch.eager_transforms.maybe_disable_grad_dls_dispatch():
+                            r = callback(
+                                lambda: torch.empty_strided(
+                                    sizes,
+                                    strides,
+                                    dtype=t.dtype,
+                                    device="meta",
+                                )
                             )
-                        )
+
                     assert safe_is_leaf(r), "the callback you passed in doesn't detach"
                     if t.requires_grad:
                         r.requires_grad = t.requires_grad
